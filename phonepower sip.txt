@@ -1,0 +1,159 @@
+117.254.185.154-158 29
+gw 153
+dns 218.248.112.97
+
+
+
+
+Hi,
+
+Following are the documents required if you are taking the connection on company’s name.
+
+    Company Memorandum of Association (MOA)which is also called as Establishment certificate.
+ If the company is a proprietary firm then shop Act.
+    Company PAN card
+    Company address proof like BSNL landline Bill, Electricity Bill (Not less than 6 Months old).
+    Authorized Signatory ID proof (Which has to be the owner of a proprietary firm or one of the Directors of the company).
+ If Director or owner cant do day to day interaction with the operator, he can sign an authorization letter 
+(On company Letter Head) making some other person the authorized signatory.
+    Authorized Signatory photograph.
+    Purchase Order on letter head from authorized person.
+
+
+2988000
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1800102001(Toll Free)
+
+Account no 19487537
+Internal id 71222208
+
+23436917
+
+
+
+
+
+
+
+
+
+
+
+
+
+As mentioned, the KB article is being created, but here's our recommended settings for those interested:
+
+[general]
+;There will be other bits here but the following value should be changed
+defaultexpirey=3600
+
+; This will register your line to PhonePower and make it available via extensions.conf as [[SIP User ID]]
+register => [[Auth ID]] [SIP Password]]@208.64.8.6:5060/[[SIP User ID]]
+
+;This defines the peer.
+; Notes are included to aid understanding
+[phonepower-sip]
+type=peer ;peer is used because it is a bi-directional channel
+context=from-trunk ;context for calls originating here
+insecure=very ;If this is not set inbound calls will not work
+nat=never ;Our border elements will handle this. Configuring NAT traversal will break more than it fixes
+dtmfmode=inband ;In our experience in-band DTMF with asterisk was much more reliable than RFC2833
+username=[[SIP User ID]]
+secret=[[SIP Password]]
+authuser=[[Auth ID]]
+host=208.64.8.6
+fromuser=[[SIP User ID]]
+fromdomain=208.64.8.6
+maxexpirey=3600 ;
+minexpirey=30 ;
+disallow=all ;These 3 lines ensure all calls will only use G711 or G729
+allow=uLaw ;
+allow=g729 ;
+
+It is strongly recommended that IP tables be configured as well to prevent unauthorized access.
+
+The following is a rudimentary firewall config for an Asterisk server with a single network interface. As always this is for expert users only.
+
+iptables -A INPUT -i lo -j ACCEPT
+iptables -A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
+iptables -A INPUT –p tcp –dport 22 -j ACCEPT
+iptables -A INPUT -s 192.168.0.0/16 -j ACCEPT
+iptables -A INPUT –s 172.16.0.0/12 -j ACCEPT
+iptables -A INPUT -s 10.0.0.0/8 -j ACCEPT
+iptables -A INPUT -s 208.64.8.6 -j ACCEPT
+iptables -A INPUT -j DROP
+
+You will need to follow the directions for your Linux distribution to make this firewall persist on reboot.
+For Redhat based distributions “/sbin/service iptables save” will save this config and “/sbin/chkconfig --level 345 iptables on”
+ will ensure iptables starts with this config after each reboot. 
+
+
+
+
+
+
+
+
+
+UPDATE:
+Here is what is working for me. This has been stable for a week.
+Outbound, both trunks are showing correctly when I specify the outbound route by dialing a prefix before the number.
+Inbound, the calls to either trunk number show in FreePBX as inbound on the same trunk (trunk #1), but since the inbound route caller ID is specified, the calls are correctly routed to the ring groups I have specified for each trunk.
+So it's a minor annoyance. The problem seems to be that both trunks are registering using the same port and IP address.
+I have the maximum channels set to 2 on each trunk. I have verified that I can get 2 simultaneous calls on a single trunk, but I haven't determined if I can get all 4 going at once.
+
+Solution would seem to be the ability to use a different IP and/or port on either my end or PP end, I have tried 5061, it won't register unless it's 12060 or 5060.
+
+Trunk Name: PPaccount1
+
+Peer Details:
+
+type=peer
+context=from-trunk
+insecure=very
+nat=never
+dtmfmode=inband
+username=6185551212
+secret=areallylongpassword1
+authuser=6185551212
+host=208.64.8.6
+fromuser=6185551212
+fromdomain=208.64.8.6
+maxexpiry=3600
+minexpiry=30
+disallow=all
+allow=uLaw&g729
+
+Registration String: 206.15.150.6
+
+6185551212:areallylongpassword1@208.64.8.6:5060/6185551212
+06CC3EBD87BBB60
